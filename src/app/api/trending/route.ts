@@ -50,20 +50,67 @@ function extractKeywords(titles: string[]): { word: string; count: number }[] {
     .slice(0, 20); // Get top 20 keywords
 }
 
+let cachedToken: string | null = null;
+let tokenExpiry: number = 0;
+
+async function getRedditToken() {
+  // Return cached token if still valid (expires in 1 hour)
+  if (cachedToken && tokenExpiry > Date.now()) {
+    return cachedToken;
+  }
+
+  const auth = Buffer.from(`${process.env.REDDIT_CLIENT_ID}:${process.env.REDDIT_CLIENT_SECRET}`).toString('base64');
+  const tokenResponse = await fetch('https://www.reddit.com/api/v1/access_token', {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${auth}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'grant_type=client_credentials',
+  });
+
+  const tokenData = await tokenResponse.json();
+  cachedToken = tokenData.access_token;
+  tokenExpiry = Date.now() + (55 * 60 * 1000); // Set expiry to 55 minutes
+  return cachedToken;
+}
+
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response;
+      
+      // If token might be expired, clear cache and retry
+      if (response.status === 403) {
+        cachedToken = null;
+        // Wait a bit before retry
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        continue;
+      }
+      
+      throw new Error(`Reddit API request failed: ${response.status}`);
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+  throw new Error('Max retries reached');
+}
+
 export async function GET() {
   try {
-    const response = await fetch(
-      'https://www.reddit.com/r/all/top.json?limit=100&t=day',
+    const token = await getRedditToken();
+    
+    const response = await fetchWithRetry(
+      'https://oauth.reddit.com/r/all/top.json?limit=100&t=day',
       {
         headers: {
+          'Authorization': `Bearer ${token}`,
           'User-Agent': 'Mozilla/5.0 (compatible; Infinigallery/1.0; +http://localhost:3000)'
         }
       }
     );
-
-    if (!response.ok) {
-      throw new Error(`Reddit API request failed: ${response.status}`);
-    }
 
     const data = await response.json();
     const titles = data.data.children.map((post: any) => post.data.title);

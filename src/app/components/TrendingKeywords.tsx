@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 interface Keyword {
@@ -16,23 +16,14 @@ interface TrendingKeywordsProps {
 
 export default function TrendingKeywords({ selectedKeywords, onKeywordSelect }: TrendingKeywordsProps) {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
     const fetchKeywords = async () => {
       try {
-        setLoading(true);
-        setError(null);
-        
+        setIsLoading(true);
         const response = await fetch('/api/trending');
         
         if (!response.ok) {
@@ -41,31 +32,30 @@ export default function TrendingKeywords({ selectedKeywords, onKeywordSelect }: 
         
         const data = await response.json();
         
-        if (isMounted) {
-          setKeywords(data.keywords);
+        if (isMounted.current) {
+          setKeywords(data.keywords || []);
+          setError(null);
         }
       } catch (err) {
-        if (isMounted) {
+        if (isMounted.current) {
+          setKeywords([]);
           setError('Failed to load trending keywords');
-          console.error('Error fetching trending keywords:', err);
+          // Use optional chaining for safer error logging
+          console.error('Error fetching trending keywords:', err?.message || err);
         }
       } finally {
-        if (isMounted) {
-          setLoading(false);
+        if (isMounted.current) {
+          setIsLoading(false);
         }
       }
     };
 
-    if (mounted) {
-      fetchKeywords();
-    }
+    fetchKeywords();
 
     return () => {
-      isMounted = false;
+      isMounted.current = false;
     };
-  }, [mounted]);
-
-  if (!mounted) return null;
+  }, []);
 
   if (error) {
     return (
@@ -81,7 +71,7 @@ export default function TrendingKeywords({ selectedKeywords, onKeywordSelect }: 
     );
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center space-x-2">
         <div className="animate-pulse bg-gray-700 rounded-full h-8 w-20"></div>
