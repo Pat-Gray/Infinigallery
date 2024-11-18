@@ -1,101 +1,150 @@
-import Image from "next/image";
+'use client';
 
+import { useState } from 'react';
+import MoodSelector from './components/MoodSelector';
+import TrendingKeywords from './components/TrendingKeywords';
+import ImagePage from './components/ImagePage/ImagePage';
+import ThemeToggle from './components/ThemeToggle';
+import { motion } from 'framer-motion';
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const [showImagePage, setShowImagePage] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const handleMoodSelect = (mood: any) => {
+    try {
+      if (selectedMood !== mood.id) {
+        setSelectedMood(mood.id);
+      } else {
+        setSelectedMood(null);
+      }
+    } catch (err) {
+      setError('Error selecting mood');
+      console.error('Error in handleMoodSelect:', err);
+    }
+  };
+
+  const handleKeywordSelect = (keyword: string) => {
+    try {
+      setSelectedKeywords(prev => {
+        if (prev.includes(keyword)) {
+          return prev.filter(k => k !== keyword);
+        } else {
+          return [...prev, keyword];
+        }
+      });
+    } catch (err) {
+      setError('Error selecting keyword');
+      console.error('Error in handleKeywordSelect:', err);
+    }
+  };
+
+  const handleSubmit = () => {
+    try {
+      setShowImagePage(true);
+    } catch (err) {
+      setError('Error submitting selection');
+      console.error('Error in handleSubmit:', err);
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-gray-50 dark:from-dark-bg dark:to-dark-card">
+        <div className="text-center p-8">
+          <p className="text-red-500 dark:text-red-400 mb-4 font-montserrat">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-primary-500 text-white rounded-full 
+              hover:bg-primary-600 transition-all duration-300 
+              font-poppins shadow-lg hover:shadow-xl
+              transform hover:scale-105 active:scale-95"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Reload Page
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-white to-gray-50 dark:from-dark-bg dark:to-dark-card transition-all duration-500">
+      {!showImagePage ? (
+        <div className="container mx-auto px-4 py-12">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-4xl mx-auto"
+          >
+            <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+              <div className="text-center md:text-left">
+                <h1 className="font-montserrat font-bold text-5xl md:text-6xl 
+                  bg-gradient-to-r from-primary-500 to-primary-700 
+                  dark:from-primary-400 dark:to-primary-600 
+                  text-transparent bg-clip-text 
+                  mb-2"
+                >
+                  Infinigallery
+                </h1>
+                <p className="text-gray-600 dark:text-gray-300 font-poppins text-lg">
+                  Visual inspiration from your mood, trending keywords from Reddit and matching music
+                </p>
+              </div>
+              <ThemeToggle />
+            </div>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-white/80 dark:bg-dark-card/80 backdrop-blur-sm 
+                rounded-3xl shadow-2xl dark:shadow-primary-500/5 
+                p-8 md:p-12 border border-gray-100 dark:border-gray-800"
+            >
+              <div className="space-y-12">
+                <TrendingKeywords 
+                  selectedKeywords={selectedKeywords}
+                  onKeywordSelect={handleKeywordSelect}
+                />
+                <MoodSelector 
+                  onMoodSelect={handleMoodSelect} 
+                  selectedMood={selectedMood}
+                />
+              </div>
+
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex justify-center mt-12"
+              >
+                <button 
+                  onClick={handleSubmit}
+                  disabled={!selectedMood && selectedKeywords.length === 0}
+                  className="px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 
+                    hover:from-primary-600 hover:to-primary-700
+                    text-white rounded-full font-poppins font-medium text-lg
+                    shadow-lg hover:shadow-xl
+                    transform transition-all duration-300 hover:scale-105 
+                    active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+                    disabled:hover:scale-100 disabled:hover:shadow-lg
+                    focus:outline-none focus:ring-2 focus:ring-primary-500/50
+                    dark:focus:ring-primary-500/30"
+                >
+                  Explore Images
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </div>
+      ) : (
+        <ImagePage 
+          selectedMood={selectedMood} 
+          selectedKeywords={selectedKeywords}
+        />
+      )}
+    </main>
   );
 }
