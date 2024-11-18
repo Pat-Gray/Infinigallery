@@ -12,7 +12,7 @@ export default function Home() {
   const [showImagePage, setShowImagePage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleMoodSelect = (mood: any) => {
+  const handleMoodSelect = (mood: { id: string }) => {
     try {
       if (selectedMood !== mood.id) {
         setSelectedMood(mood.id);
@@ -141,7 +141,7 @@ export default function Home() {
         </div>
       ) : (
         <ImagePage 
-          selectedMood={selectedMood} 
+          selectedMood={selectedMood || undefined} 
           selectedKeywords={selectedKeywords}
         />
       )}

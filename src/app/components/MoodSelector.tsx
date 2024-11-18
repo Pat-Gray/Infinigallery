@@ -2,8 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { 
-  FaSmile, FaSadTear, FaHeart, 
-  FaMusic, FaBolt, FaLeaf, FaMicrophone, FaMoon, FaClock, FaMountain, FaWater 
+  FaSmile, FaSadTear, FaHeart, FaBolt, FaLeaf, FaMoon, FaClock, FaMountain, FaWater 
 } from 'react-icons/fa';
 
 interface MoodOption {
