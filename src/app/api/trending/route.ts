@@ -100,6 +100,14 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3) {
 
 export async function GET() {
   try {
+    if (!process.env.REDDIT_CLIENT_ID || !process.env.REDDIT_CLIENT_SECRET) {
+      console.error('Missing Reddit API credentials');
+      return NextResponse.json(
+        { error: 'Reddit API credentials not configured' },
+        { status: 500 }
+      );
+    }
+
     const token = await getRedditToken();
     
     const response = await fetchWithRetry(
@@ -121,7 +129,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching trending keywords:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch trending keywords' },
+      { error: error instanceof Error ? error.message : 'Failed to fetch trending keywords' },
       { status: 500 }
     );
   }
